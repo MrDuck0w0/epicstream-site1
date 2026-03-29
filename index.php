@@ -1,0 +1,1461 @@
+<!DOCTYPE html><html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>EpicStream - Pro Access</title>
+   
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+   
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* =========================================
+      CORE VARIABLES & THEMES
+      ========================================= */
+    :root {
+      --glass-bg: rgba(10, 10, 15, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.05);
+      --spring-easing: cubic-bezier(0.175, 0.885, 0.32, 1.15); 
+      --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      --transition-sexy: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      --true-black: #000000;
+      --off-black: #050508;
+    }
+    body.theme-red { --primary: #e50914; --primary-glow: rgba(229, 9, 20, 0.5); --rgb-primary: 229, 9, 20; --primary-text: #fff; --bg-base: #000000; }
+    body.theme-cyber { --primary: #00e5ff; --primary-glow: rgba(0, 229, 255, 0.5); --rgb-primary: 0, 229, 255; --primary-text: #000; --bg-base: #000000; }
+    body.theme-gold { --primary: #ffd700; --primary-glow: rgba(255, 215, 0, 0.4); --rgb-primary: 255, 215, 0; --primary-text: #000; --bg-base: #000000; }
+    
+    /* THE NEW PRO CYAN THEME */
+    body.theme-pro-cyan { 
+      --primary: #0ea5e9; 
+      --primary-glow: rgba(14, 165, 233, 0.25); 
+      --rgb-primary: 14, 165, 233; 
+      --primary-text: #ffffff; 
+      --bg-base: #070b14; 
+      --true-black: #04060b;
+    }
+
+    * { box-sizing: border-box; outline: none; margin: 0; padding: 0; }
+    ::-webkit-scrollbar { width: 6px; background: #000; }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    html, body { background-color: var(--bg-base); color: #fff; font-family: 'Outfit', sans-serif; overflow-x: hidden; min-height: 100vh; transition: background-color 0.5s ease; }
+    
+    /* Background Effects */
+    .ambient-container { position: fixed; inset: 0; z-index: -5; overflow: hidden; pointer-events: none; background: var(--bg-base); }
+    .color-blob { position: absolute; border-radius: 50%; filter: blur(150px); opacity: 0.15; animation: floatBlob infinite alternate ease-in-out; transition: background 1.5s ease; }
+    .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--primary); animation-duration: 25s; }
+    .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: var(--primary-glow); animation-duration: 30s; animation-delay: -5s; opacity: 0.15; }
+    @keyframes floatBlob { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-5%, -10%) scale(1.1); } }
+     
+    .bg-watermark-wrapper { display: none; }
+    
+    /* =========================================
+      TOAST NOTIFICATIONS
+      ========================================= */
+    #custom-toast {
+      position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+      background: rgba(10, 10, 15, 0.9); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-top: 1px solid var(--primary); color: white; 
+      padding: 16px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; 
+      display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); 
+      z-index: 1000000; transition: all 0.5s var(--spring-easing); pointer-events: none; opacity: 0;
+    }
+    #custom-toast.show { bottom: 40px; opacity: 1; }
+    #custom-toast.success i { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
+    #custom-toast.error { border-color: rgba(255, 51, 51, 0.2); border-top-color: #ff3333; box-shadow: 0 15px 40px rgba(255,0,0,0.2); }
+    #custom-toast.error i { color: #ff3333; filter: drop-shadow(0 0 5px #ff3333); }
+    
+    /* =========================================
+      ✨ SEXY CINEMATIC LOGIN SCREEN ✨
+      ========================================= */
+    #login-screen { 
+      position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; 
+      background: var(--true-black); transition: opacity 0.8s ease; overflow: hidden;
+    }
+    #login-screen::before {
+      content: ''; position: absolute; inset: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(var(--rgb-primary), 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(var(--rgb-primary), 0.08) 0%, transparent 40%);
+      animation: backgroundShift 15s ease infinite alternate;
+      z-index: 1;
+    }
+    @keyframes backgroundShift {
+      0% { transform: scale(1) translate(0,0); }
+      100% { transform: scale(1.1) translate(-2%, 2%); }
+    }
+    .cinematic-beams {
+      position: absolute; inset: 0; z-index: 2; opacity: 0.15;
+      background-image: 
+        linear-gradient(110deg, transparent 40%, rgba(var(--rgb-primary), 0.3) 45%, rgba(var(--rgb-primary), 0.3) 55%, transparent 60%);
+      background-size: 200% 100%;
+      animation: beamSlide 8s linear infinite;
+      filter: blur(10px);
+    }
+    @keyframes beamSlide { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+    .sexy-login-card { 
+      position: relative; z-index: 10;
+      background: rgba(7, 11, 20, 0.6); backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+      padding: 80px 60px; border-radius: 40px; text-align: center; width: 90%; max-width: 460px; 
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 30px rgba(var(--rgb-primary), 0.05); 
+      border: 1px solid rgba(255,255,255,0.08); 
+      transform-origin: center center;
+      animation: cardEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+      transform: translateY(60px) scale(0.95) rotateX(10deg); opacity: 0; 
+      overflow: hidden;
+    }
+     
+    .sexy-login-card::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(var(--rgb-primary), 0.2) 50%, rgba(255,255,255,0.05) 100%);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: xor;
+      -webkit-mask-composite: xor;
+      pointer-events: none;
+    }
+    @keyframes cardEntrance { to { transform: translateY(0) scale(1) rotateX(0deg); opacity: 1; } }
+    .login-title { 
+      font-size: 42px; font-weight: 900; color: white; margin-bottom: 8px; 
+      text-shadow: none; 
+      letter-spacing: 2px; text-transform: uppercase; 
+      font-family: 'Outfit', sans-serif;
+    }
+    .login-subtitle { 
+      color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 50px; 
+      font-weight: 400; letter-spacing: 3px; text-transform: uppercase;
+    }
+    .sexy-input-group { position: relative; margin-bottom: 35px; }
+    .sexy-input-group i { 
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%); 
+      color: rgba(255,255,255,0.2); font-size: 16px; transition: var(--transition-sexy); z-index: 2;
+    }
+    .sexy-input { 
+      width: 100%; padding: 20px 40px 10px 10px; 
+      background: transparent; border: none; border-bottom: 2px solid rgba(255,255,255,0.1); 
+      color: white; font-size: 18px; text-align: right; letter-spacing: 4px; 
+      transition: var(--transition-sexy); font-weight: 400; font-family: inherit;
+    }
+    .sexy-input::placeholder { color: rgba(255,255,255,0.15); font-weight: 100; letter-spacing: normal; }
+     
+    .sexy-input-group::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); 
+      width: 0; height: 2px; background: var(--primary); transition: var(--transition-sexy); 
+    }
+    .sexy-input-group:focus-within i { color: var(--primary); transform: translateY(-50%) scale(1.1); filter: drop-shadow(0 0 8px var(--primary-glow)); }
+    .sexy-input-group:focus-within .sexy-input { border-bottom-color: transparent; }
+    .sexy-input-group:focus-within::after { width: 100%; }
+    .sexy-submit-btn { 
+      background: var(--primary);
+      color: white; padding: 22px; width: 100%; border-radius: 50px; 
+      font-size: 16px; font-weight: 800; cursor: pointer; transition: var(--transition-sexy); 
+      display: flex; justify-content: center; align-items: center; gap: 15px;
+      text-transform: uppercase; letter-spacing: 2px; 
+      position: relative; overflow: hidden;
+      border: none; box-shadow: 0 8px 20px var(--primary-glow);
+    }
+     
+    .sexy-submit-btn i { transition: var(--transition-sexy); transform: translateX(5px); }
+    .sexy-submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(14, 165, 233, 0.4); color: var(--primary-text); }
+    .sexy-submit-btn:hover:not(:disabled) i { transform: translateX(0); }
+    .sexy-submit-btn:active:not(:disabled) { transform: scale(0.98); box-shadow: 0 5px 15px var(--primary-glow); }
+    .sexy-submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    
+    /* =========================================
+      🚨 SYSTEM SHUTDOWN SCREEN 🚨
+      ========================================= */
+    #shutdown-screen { display: none; position: fixed; inset: 0; z-index: 999999999; background: #000; justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 20px; overflow: hidden;}
+    #shutdown-screen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(255, 0, 0, 0.05) 0%, transparent 70%); z-index: 1; pointer-events: none;}
+    .shutdown-content { position: relative; z-index: 10; max-width: 700px; animation: glitchIn 0.5s ease forwards; }
+    @keyframes glitchIn { 0% { opacity: 0; transform: scale(1.05); filter: blur(10px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+    .shutdown-icon-wrap { margin-bottom: 25px; animation: pulseFatal 2s infinite; }
+    .shutdown-icon-wrap i { font-size: 80px; color: #ff003c; filter: drop-shadow(0 0 30px rgba(255, 0, 60, 0.6)); }
+    @keyframes pulseFatal { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.95); filter: drop-shadow(0 0 10px rgba(255, 0, 60, 0.3));} }
+    .shutdown-title { font-size: 4.5rem; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: -2px; line-height: 1; text-transform: uppercase;}
+    .shutdown-desc { font-size: 1.4rem; color: #aaa; line-height: 1.6; font-weight: 300; margin-bottom: 40px;}
+    .shutdown-box { background: rgba(255, 0, 60, 0.03); border: 1px solid rgba(255,0,60,0.2); padding: 25px; border-radius: 16px; border-right: 5px solid #ff003c; text-align: right;}
+    .shutdown-box p { color: #ff3333; font-weight: 600; margin-bottom: 5px; font-size: 18px;}
+    .shutdown-box span { color: #888; font-size: 14px;}
+    .shutdown-meta { margin-top: 50px; font-family: monospace; color: #444; font-size: 13px; letter-spacing: 3px;}
+    
+    /* =========================================
+      🚨 KILL SWITCH CONFIRMATION MODAL 🚨
+      ========================================= */
+    #kill-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000000; backdrop-filter: blur(15px); justify-content: center; align-items: center; opacity: 0; transition: 0.4s ease;}
+    #kill-overlay.active { display: flex; opacity: 1; }
+    .kill-modal { background: rgba(15, 5, 5, 0.95); border: 1px solid rgba(255, 51, 51, 0.3); padding: 50px; border-radius: 30px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 30px 100px rgba(255, 0, 0, 0.2); transform: scale(0.9); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #kill-overlay.active .kill-modal { transform: scale(1); }
+    .kill-modal i { font-size: 50px; color: #ff3333; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(255,0,0,0.5));}
+    .kill-modal h2 { color: white; font-size: 28px; font-weight: 900; margin-bottom: 15px; }
+    .kill-modal p { color: #aaa; font-size: 15px; line-height: 1.6; margin-bottom: 35px; }
+    .kill-btn-group { display: flex; gap: 15px; flex-direction: column; }
+    .k-btn-yes { background: linear-gradient(135deg, #ff003c, #cc0033); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
+    .k-btn-yes:hover { box-shadow: 0 10px 30px rgba(255,0,0,0.4); transform: translateY(-3px);}
+    .k-btn-no { background: transparent; color: #888; border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 15px; font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.3s; }
+    .k-btn-no:hover { background: rgba(255,255,255,0.05); color: white; border-color: rgba(255,255,255,0.2);}
+    
+    /* =========================================
+      GLOBAL ALERTS & MAINTENANCE
+      ========================================= */
+    #global-announcement { display: none; position: fixed; top: 0; left: 0; width: 100%; background: var(--primary); color: var(--primary-text); text-align: center; padding: 12px 40px; font-weight: 800; z-index: 1000000; box-shadow: 0 5px 20px var(--primary-glow); font-size: 15px;}
+    #global-announcement i.close-btn { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px;}
+     
+    #maintenance-screen { display: none; position: fixed; inset: 0; z-index: 9999999; background: radial-gradient(circle at center, rgba(15,15,20,0.98) 0%, #000 100%); justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 20px; }
+    .maintenance-card { background: rgba(10, 10, 15, 0.4); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.03); border-top: 1px solid var(--primary); padding: 60px 40px; border-radius: 40px; box-shadow: 0 50px 100px rgba(0,0,0,0.9); max-width: 540px; width: 100%; animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes slideUpFade { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+    .maintenance-icon-wrap { width: 120px; height: 120px; background: rgba(255,255,255,0.02); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 40px auto; border: 1px solid rgba(255,255,255,0.04); animation: floatPulse 3s ease-in-out infinite; }
+    .maintenance-icon-wrap i { font-size: 50px; color: var(--primary); filter: drop-shadow(0 0 15px var(--primary-glow)); animation: spinSlow 10s linear infinite; }
+    @keyframes floatPulse { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.03); } }
+    @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .maintenance-title { font-size: 3rem; font-weight: 800; margin-bottom: 20px; color: #fff; text-shadow: 0 5px 20px rgba(0,0,0,0.6); letter-spacing: -1.5px;}
+    .maintenance-desc { font-size: 1.2rem; color: rgba(255,255,255,0.6); line-height: 1.7; margin-bottom: 50px; font-weight: 300; }
+    .maintenance-btn { background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; border: none; padding: 18px 50px; border-radius: 50px; font-size: 18px; font-weight: 800; cursor: pointer; transition: var(--transition-sexy); box-shadow: 0 10px 20px rgba(2, 132, 199, 0.3); display: inline-flex; align-items: center; gap: 12px; letter-spacing: 0.5px; }
+    .maintenance-btn:hover { background: linear-gradient(135deg, #7dd3fc, #0ea5e9); transform: translateY(-5px) scale(1.03); box-shadow: 0 15px 25px rgba(2, 132, 199, 0.4); }
+
+    #block-alert { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(20, 0, 0, 0.95); border: 1px solid #ff3333; color: white; padding: 15px 30px; border-radius: 50px; font-weight: bold; z-index: 9999999; box-shadow: 0 15px 40px rgba(255,0,0,0.5); transition: 0.5s var(--spring-easing); display: flex; align-items: center; gap: 15px; font-size: 16px; backdrop-filter: blur(5px); }
+    #block-alert.show { top: 30px; }
+    
+    /* =========================================
+      HEADER & TEXT LOGO
+      ========================================= */
+    #site-content { display: none; padding-bottom: 50px; }
+    header { 
+      display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; 
+      background: rgba(7, 11, 20, 0.75) !important; 
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255,255,255,0.05); 
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000; transition: var(--transition-smooth);
+    }
+    .header-right { display: flex; align-items: center; gap: 40px; }
+     
+    .logo-text { 
+      font-size: 28px; font-weight: 800; font-family: 'Outfit', sans-serif;
+      color: #fff; cursor: pointer; transition: var(--transition-sexy); 
+      letter-spacing: -0.5px; display: flex; align-items: center;
+    }
+    .logo-text .light { 
+      font-weight: 400; color: var(--primary); text-shadow: none; margin-right: 5px;
+    }
+    .logo-text:hover { transform: scale(1.05); }
+    
+    .nav-links { display: flex; gap: 35px; align-items: center; transition: 0.4s ease;}
+    .nav-link { color: rgba(255,255,255,0.6); font-size: 16px; font-weight: 400; cursor: pointer; transition: 0.3s ease; position: relative; padding-bottom: 5px; text-decoration: none;}
+    .nav-link::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 3px; background: var(--primary); border-radius: 5px; transition: 0.3s ease; opacity: 0; box-shadow: 0 0 10px var(--primary-glow); }
+    .nav-link:hover { color: white; }
+    .nav-link.active { color: white; font-weight: 600; }
+    .nav-link.active::after { width: 100%; opacity: 1; }
+    
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-content { visibility: hidden; opacity: 0; position: absolute; top: 150%; right: 0; background: rgba(10,10,15,0.95); backdrop-filter: blur(30px); min-width: 220px; border-radius: 20px; border: 1px solid var(--glass-border); box-shadow: 0 25px 60px rgba(0,0,0,0.9); padding: 15px 0; transform: translateY(15px); transition: var(--transition-sexy); z-index: 2000; }
+    .dropdown:hover .dropdown-content { visibility: visible; opacity: 1; transform: translateY(0); }
+    .dropdown-content a { color: rgba(255,255,255,0.8); padding: 14px 25px; display: flex; align-items: center; gap: 15px; font-size: 15px; font-weight: 400; cursor: pointer;}
+    .dropdown-content a:hover { background: rgba(var(--rgb-primary), 0.08); color: white; padding-right: 35px; }
+    .dropdown-content a i { color: var(--primary); width: 20px; text-align: center; }
+    
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .search-box { 
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+      border-radius: 50px; padding: 12px 22px; display: flex; align-items: center; width: 260px; transition: var(--transition-sexy); backdrop-filter: blur(10px); box-shadow: none;
+    }
+    .search-box:focus-within { 
+      background: rgba(14, 165, 233, 0.05); border-color: var(--primary); 
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15); width: 340px; 
+    }
+    .search-box input { background: transparent; border: none; color: white; width: 100%; font-size: 15px; margin-right: 15px; font-family: inherit; font-weight: 300;}
+    .search-box input::placeholder { color: rgba(255,255,255,0.2); }
+     
+    .user-menu { display: flex; align-items: center; gap: 12px; }
+    .badge { padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 12px; display:flex; align-items:center; gap:8px; background: rgba(0,0,0,0.6); border: 1px solid rgba(var(--rgb-primary), 0.3); color: var(--primary); text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(var(--rgb-primary), 0.1); }
+    .badge-manager { border-color: rgba(0, 229, 255, 0.3); color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
+    .icon-btn { color: rgba(255,255,255,0.5); cursor: pointer; font-size: 18px; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; border-radius: 50%; background: rgba(255,255,255,0.03); border: 1px solid transparent; transition: var(--transition-sexy);}
+    .icon-btn:hover { color: var(--primary-text); background: var(--primary); border-color: var(--primary); transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 20px var(--primary-glow); }
+    .icon-btn.discord:hover { background: #5865F2; border-color: #5865F2; box-shadow: 0 10px 20px rgba(88, 101, 242, 0.4); }
+     
+    /* =========================================
+      HOME HERO & CARDS
+      ========================================= */
+    #hero-section { position: relative; width: 100vw; height: 92vh; display: flex; align-items: center; padding: 0 80px; overflow: hidden; }
+    .hero-bg { position: absolute; inset: -20px; background-size: cover; background-position: center top; z-index: -2; animation: smoothZoom 50s infinite alternate linear; filter: blur(2px) brightness(0.7); }
+    @keyframes smoothZoom { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg-base) 0%, rgba(0,0,0,0.4) 50%, transparent 100%), linear-gradient(to top, var(--bg-base) 0%, transparent 40%), radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%); z-index: -1;}
+     
+    .hero-content { max-width: 700px; z-index: 1; animation: fadeUpCinematic 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: translateY(50px); opacity: 0; margin-top: 60px;}
+    @keyframes fadeUpCinematic { to { opacity: 1; transform: translateY(0); } }
+    .hero-title { font-size: 5rem; font-weight: 800; margin: 0; line-height: 1.05; text-shadow: 0 4px 20px rgba(0,0,0,0.8); letter-spacing: -1.5px; }
+    .hero-desc { font-size: 1.2rem; color: rgba(255,255,255,0.7); line-height: 1.7; text-shadow: 0 5px 20px rgba(0,0,0,1); margin: 25px 0 45px 0; font-weight: 300; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;}
+    .btn-play-hero { background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; border: none; padding: 18px 45px; border-radius: 50px; font-size: 16px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; transition: var(--transition-sexy); box-shadow: 0 10px 20px rgba(2, 132, 199, 0.3); letter-spacing: 0.5px;}
+    .btn-play-hero:hover { background: linear-gradient(135deg, #7dd3fc, #0ea5e9); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(2, 132, 199, 0.4);}
+    
+    .category-section { margin-bottom: 45px; padding-left: 60px; position: relative; z-index: 10; margin-top: -60px; }
+    .category-title { font-size: 26px; font-weight: 700; margin-bottom: 20px; color: #fff; display: flex; align-items: center; position: relative; padding-right: 18px; letter-spacing: 0;}
+    .category-title::before { content: ''; position: absolute; right: 0; top: 10%; height: 80%; width: 4px; background: var(--primary); border-radius: 4px; box-shadow: none; }
+    .row-wrapper { display: flex; gap: 20px; overflow-x: auto; padding: 25px 0 50px 0; scroll-behavior: smooth; cursor: grab; }
+    .row-wrapper::-webkit-scrollbar { display: none; }
+     
+    @keyframes cardPopInCinematic { 0% { opacity: 0; transform: translateY(40px) scale(0.9); filter: blur(5px); } 100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+    .movie-card { 
+      flex: 0 0 220px; height: 330px; position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; 
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4); background: #111; transition: var(--transition-sexy); 
+      border: 1px solid rgba(255,255,255,0.05); transform-origin: center bottom;
+      animation: cardPopInCinematic 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; 
+    }
+     
+    .movie-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .card-hover-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 60%, transparent 100%); opacity: 0; transition: 0.5s ease; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 30px; z-index: 5;}
+    .card-btn { background: var(--primary); color: var(--primary-text); padding: 12px 25px; border-radius: 50px; font-size: 14px; font-weight: 800; transform: translateY(20px) scale(0.9); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px var(--primary-glow); display: flex; align-items: center; gap: 8px; text-transform: uppercase;}
+     
+    .movie-card:hover { transform: translateY(-8px) scale(1.03); z-index: 30; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(14, 165, 233, 0.3);}
+    .movie-card:hover img { filter: brightness(0.5) blur(1px); transform: scale(1.1); }
+    .movie-card:hover .card-hover-overlay { opacity: 1; }
+    .movie-card:hover .card-btn { transform: translateY(0) scale(1); }
+    
+    #dynamic-view { display: none; padding: 130px 60px 60px 60px; min-height: 100vh; }
+    .dynamic-header { font-size: 3rem; font-weight: 900; margin-bottom: 40px; border-bottom: 4px solid var(--primary); display: inline-block; letter-spacing: -1.5px; padding-bottom: 5px; box-shadow: 0 5px 0 -1px rgba(0,0,0,0.5), 0 9px 20px -2px var(--primary-glow);}
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px; }
+    .grid-container .movie-card { flex: none; width: 100%; height: 300px; }
+    
+    /* =========================================
+      ✨ HACKER / MODERN ADMIN PANEL ✨
+      ========================================= */
+    #admin-overlay, #request-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100000; opacity: 0; pointer-events: none; transition: var(--transition-sexy); backdrop-filter: blur(8px);}
+    #admin-overlay.active, #request-overlay.active { opacity: 1; pointer-events: all; }
+     
+    #admin-panel { 
+      position: fixed; top: 0; right: -480px; width: 440px; height: 100vh; 
+      background: rgba(4, 6, 11, 0.85);
+      border-left: 1px solid rgba(14, 165, 233, 0.2); 
+      z-index: 100001; padding: 40px 30px; overflow-y: auto; 
+      transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+      box-shadow: -20px 0 80px rgba(0,0,0,0.9), inset 5px 0 30px rgba(14, 165, 233, 0.05); 
+      backdrop-filter: blur(40px);
+    }
+    #admin-panel.active { right: 0; }
+    
+    .admin-header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; margin-bottom: 30px;
+    }
+    .admin-header h2 { 
+      margin: 0; color: var(--primary); font-weight: 900; display:flex; align-items:center; gap:12px; 
+      font-size: 26px; text-transform: uppercase; letter-spacing: 2px; 
+      filter: drop-shadow(0 0 15px var(--primary-glow));
+    }
+    
+    .admin-section-title { 
+      color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 15px; font-weight: 700; 
+      text-align: right; text-transform: uppercase; letter-spacing: 2px; 
+      border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;
+    }
+    
+    .admin-theme-btn { 
+      display: block; width: 100%; background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.8); 
+      border: 1px solid rgba(255,255,255,0.05); padding: 14px; margin-bottom: 10px; border-radius: 8px; 
+      cursor: pointer; transition: var(--transition-sexy); font-weight: 600; font-size: 14px; text-align: right;
+    }
+    .admin-theme-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateX(-5px); color: #fff;}
+    
+    .admin-input-dark { 
+      width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+      color: white; padding: 16px; border-radius: 8px; margin-bottom: 15px; font-family: monospace; font-size: 15px; font-weight: 400;
+      transition: var(--transition-sexy);
+    }
+    .admin-input-dark:focus { border-color: var(--primary); box-shadow: 0 0 15px var(--primary-glow), inset 0 2px 5px rgba(0,0,0,0.5); background: rgba(0,0,0,0.6); }
+     
+    .btn-create-key { 
+      background: var(--primary); color: var(--primary-text); border: none; padding: 16px; width: 100%; 
+      border-radius: 8px; font-weight: 800; cursor: pointer; transition: var(--transition-sexy); 
+      margin-bottom: 12px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
+      box-shadow: 0 8px 20px var(--primary-glow);
+    }
+    .btn-create-key:hover { background: #38bdf8; box-shadow: 0 12px 25px var(--primary-glow); transform: translateY(-2px); }
+     
+    .btn-kill-switch { 
+      background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); 
+      padding: 16px; width: 100%; border-radius: 8px; font-weight: 800; cursor: pointer; 
+      transition: var(--transition-sexy); margin-bottom: 25px; font-size: 15px; text-transform: uppercase; display: none;
+    }
+    .btn-kill-switch:hover { background: #ff3333; color: white; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255, 51, 51, 0.4);}
+    .btn-kill-switch.active { background: #ff3333; color: white; animation: fatalPulse 1.5s infinite; border-color: transparent;}
+     
+    .btn-close-panel { 
+      background: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); 
+      padding: 14px; width: 100%; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition-sexy); font-size: 14px;
+    }
+    .btn-close-panel:hover { background: rgba(255,255,255,0.05); color: white; border-color: rgba(255,255,255,0.3); }
+     
+    /* ✨ DATABASE SECTION (OWNER ONLY) ✨ */
+    #db-section { display: none; margin-top: 30px; border-top: 1px solid rgba(14, 165, 233, 0.3); padding-top: 25px; }
+    .db-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.03); transition: var(--transition-smooth);}
+    .db-item:hover { border-color: rgba(255,255,255,0.1); background: rgba(0,0,0,0.8); }
+    .db-key-text { font-family: monospace; font-size: 14px; font-weight: 600; color: white; letter-spacing: 1px;}
+    .db-role-tag { font-size: 10px; padding: 4px 8px; border-radius: 4px; background: rgba(0,229,255,0.1); color: #00e5ff; margin-right: 8px; font-weight: 800; text-transform: uppercase;}
+    .db-role-tag.role-owner { background: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+    .db-role-tag.role-manager { background: rgba(0, 229, 255, 0.1); color: #00e5ff; border: 1px solid rgba(0, 229, 255, 0.3);}
+    .db-role-tag.role-vip { background: rgba(229, 9, 20, 0.1); color: #e50914; border: 1px solid rgba(229, 9, 20, 0.3);}
+    .db-role-tag.role-member { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid rgba(255,255,255,0.1);}
+    .db-del-btn { background: transparent; border: none; color: rgba(255, 51, 51, 0.5); font-size: 16px; cursor: pointer; transition: 0.2s;}
+    .db-del-btn:hover { color: #ff3333; transform: scale(1.2);}
+    .log-box { max-height: 250px; overflow-y: auto; padding-left: 5px;}
+    
+    #request-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9) rotateX(15deg); width: 95%; max-width: 460px; background: rgba(10,10,15,0.9); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.04); border-radius: 30px; z-index: 100001; padding: 50px; opacity: 0; pointer-events: none; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 40px 120px rgba(0,0,0,1);}
+    #request-modal.active { opacity: 1; transform: translate(-50%, -50%) scale(1) rotateX(0deg); pointer-events: all; }
+    #request-modal h2 { color: white; margin-bottom: 35px; text-align: center; font-weight: 900; font-size: 28px; letter-spacing: -1px; }
+    #request-modal .btn-create-key { margin-top: 15px; }
+    
+    /* =========================================
+      ✨ SEXY DETAILS MODAL ANIMATION ✨
+      ========================================= */
+    #details-overlay { 
+      display: none; opacity: 0; position: fixed; inset: 0; z-index: 80000; 
+      background: var(--true-black); overflow-y: auto; overflow-x: hidden; 
+      transition: opacity 0.6s ease;
+    }
+    #details-overlay.active { opacity: 1; }
+     
+    .liquid-modal-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transform: scale(1); transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); filter: blur(3px) brightness(0.6);}
+    #details-overlay.active .liquid-modal-bg { transform: scale(1.05); }
+    .details-gradient { position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, var(--true-black) 5%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 100%); }
+     
+    .btn-close-details { 
+      position: fixed; top: 35px; right: 35px; width: 55px; height: 55px; 
+      background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border-radius: 50%; 
+      display: flex; justify-content: center; align-items: center; font-size: 24px; color: rgba(255,255,255,0.6); 
+      cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.05);
+      opacity: 0; transform: translateY(-40px) rotate(-90deg); 
+      transition: 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+    }
+    #details-overlay.active .btn-close-details { opacity: 1; transform: translateY(0) rotate(0deg); }
+    .btn-close-details:hover { background: rgba(255,51,51,0.1); border-color: rgba(255,51,51,0.3); color: #ff3333; transform: scale(1.1) rotate(90deg) !important; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+     
+    .details-wrapper { position: relative; min-height: 100vh; z-index: 3; display: flex; flex-direction: column; padding: 15vh 10% 5% 10%; }
+     
+    .content-box { 
+      max-width: 1100px; width: 100%;
+      background: rgba(10, 10, 15, 0.3); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.04); 
+      border-radius: 30px; padding: 60px; box-shadow: 0 40px 100px rgba(0,0,0,1), inset 0 0 30px rgba(var(--rgb-primary), 0.03); margin: 0 auto;
+      opacity: 0; transform: translateY(80px) scale(0.96) rotateX(5deg); 
+      transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+    }
+    #details-overlay.active .content-box { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+     
+    .cinematic-info { display: flex; gap: 50px; margin-bottom: 50px; align-items: flex-start;}
+    .d-poster-img { width: 280px; height: 420px; border-radius: 20px; object-fit: cover; box-shadow: 0 25px 70px rgba(0,0,0,1); flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05); transition: var(--transition-sexy);}
+    .d-poster-img:hover { transform: scale(1.03) translateY(-10px); box-shadow: 0 35px 80px rgba(0,0,0,1); border-color: rgba(255,255,255,0.1); }
+    .d-text-data { flex-grow: 1; }
+    .d-title { font-size: 4.5rem; font-weight: 900; margin: 0; text-shadow: 0 15px 40px rgba(0,0,0,1); line-height: 1.05; color: #fff; letter-spacing: -2px;}
+    .d-meta { display: flex; gap: 18px; margin: 30px 0; align-items: center; flex-wrap: wrap;}
+    .d-rating { background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); padding: 10px 22px; border-radius: 50px; font-weight: 800; font-size: 16px; border: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; gap: 10px; color: #fff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);}
+    .d-rating i { color: var(--primary); filter: drop-shadow(0 0 8px var(--primary-glow)); }
+    .d-tag { background: rgba(255,255,255,0.03); padding: 10px 22px; border-radius: 50px; font-weight: 500; border: 1px solid rgba(255,255,255,0.01); font-size: 15px; color: rgba(255,255,255,0.7); }
+    .d-type { border-color: rgba(var(--rgb-primary), 0.3); color: var(--primary); font-weight: 700; background: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 1px;}
+     
+    .d-desc { font-size: 1.2rem; color: rgba(255,255,255,0.8); line-height: 1.8; margin-bottom: 50px; max-width: 95%; background: rgba(0,0,0,0.3); padding: 25px; border-radius: 16px; border-right: 5px solid var(--primary); font-weight: 300; box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);}
+     
+    #tv-controls { margin-top: 40px; }
+    .season-selector { display: flex; gap: 25px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .season-selector::-webkit-scrollbar { display: none; }
+    .season-btn { background: transparent; border: none; padding: 12px 5px; cursor: pointer; color: rgba(255,255,255,0.4); font-weight: 500; font-size: 19px; transition: 0.3s ease; border-bottom: 3px solid transparent; letter-spacing: -0.5px;}
+    .season-btn:hover { color: #fff; }
+    .season-btn.active { color: white; font-weight: 800; border-bottom: 3px solid var(--primary); filter: drop-shadow(0 0 10px var(--primary-glow)); }
+    
+    .episodes-container { display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px; }
+    .ep-card { display: flex; align-items: center; gap: 25px; background: linear-gradient(145deg, rgba(20,20,25,0.5), rgba(10,10,15,0.7)); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.01); cursor: pointer; transition: var(--transition-sexy); padding: 15px; border-right: 5px solid transparent;}
+    .ep-img-wrapper { position: relative; width: 200px; height: 112px; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.4);} 
+    .ep-img-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .ep-card-info { flex-grow: 1; padding-right: 10px; display: flex; flex-direction: column; justify-content: center;}
+    .ep-num { font-size: 14px; color: var(--primary); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;}
+    .ep-name { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 8px; letter-spacing: -0.3px;}
+    .ep-overview { font-size: 14px; color: rgba(255,255,255,0.5); font-weight: 300; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .ep-play-overlay { position: absolute; inset:0; display:flex; justify-content:center; align-items:center; background: rgba(0,0,0,0.6); opacity:0; transition:0.4s ease; z-index: 2; backdrop-filter: blur(2px);}
+    .ep-play-btn { width: 50px; height: 50px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(5px); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; transform: scale(0.8); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+     
+    .ep-card:hover { border-right: 5px solid var(--primary); transform: translateX(-10px); background: linear-gradient(145deg, rgba(30,30,35,0.7), rgba(15,15,20,0.8)); box-shadow: -15px 15px 40px rgba(0,0,0,0.7); border-color: rgba(255,255,255,0.03); }
+    .ep-card:hover .ep-img-wrapper img { transform: scale(1.1); filter: brightness(0.6); }
+    .ep-card:hover .ep-play-overlay { opacity: 1; }
+    .ep-card:hover .ep-play-btn { transform: scale(1); background: var(--primary); border-color: var(--primary); color: var(--primary-text); box-shadow: 0 0 20px var(--primary-glow);}
+    /* =========================================
+      PLAYER WRAPPER
+      ========================================= */
+    #player-wrapper { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999999; animation: fadeIn 0.5s ease;}
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .player-header { position: absolute; top: 20px; right: 20px; z-index: 99999999; pointer-events: none; }
+    .btn-close-player { pointer-events: auto; background: rgba(10,10,15,0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; cursor: pointer; font-size: 14px; transition: var(--transition-sexy); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;}
+    .btn-close-player:hover { background: #ff3333; border-color: #ff3333; transform: scale(1.05); box-shadow: 0 10px 20px rgba(255,0,0,0.3);}
+    iframe { width: 100%; height: 100%; border: none; }
+    /* =========================================
+      📱 MOBILE FIXES (REFINED) 📱
+      ========================================= */
+    .mobile-toggle { display: none; font-size: 28px; color: var(--primary); cursor: pointer; filter: drop-shadow(0 0 10px var(--primary-glow)); }
+     
+    @media (max-width: 768px) {
+      header { padding: 15px 25px !important; flex-wrap: wrap; background: rgba(7, 11, 20, 0.95) !important; border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+      .header-right { width: 100%; justify-content: space-between; }
+      .logo-text { font-size: 24px; }
+      .mobile-toggle { display: block; font-size: 26px; }
+       
+      .nav-links { 
+        display: none; position: absolute; top: 100%; left: 0; width: 100%; 
+        background: rgba(7, 11, 20, 0.98); flex-direction: column; padding: 25px; 
+        gap: 18px; border-bottom: 3px solid var(--primary); backdrop-filter: blur(25px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.9); z-index: 999; border-top: 1px solid rgba(255,255,255,0.05);
+      }
+      .nav-links.active { display: flex; animation: slideDownMenu 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      @keyframes slideDownMenu { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+       
+      .nav-link { font-size: 18px; font-weight: 500; width: 100%; text-align: right;}
+       
+      .dropdown-content { position: static; visibility: visible; opacity: 1; transform: none; background: transparent; box-shadow: none; border: none; padding: 10px 20px 0 0; display: none; width: 100%;}
+      .dropdown:hover .dropdown-content { display: block; }
+      .dropdown-content a { padding: 10px 0; font-size: 16px;}
+      .header-left { width: 100%; flex-direction: column-reverse; margin-top: 20px; gap: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;}
+      .search-box { width: 100% !important; justify-content: center; background: rgba(255,255,255,0.05); }
+      .user-menu { width: 100%; justify-content: space-around; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.05);}
+      .icon-btn { width: 40px; height: 40px; font-size: 16px;}
+      .badge { font-size: 11px; padding: 6px 12px;}
+      #hero-section { height: 70vh; padding: 0 25px; text-align: center; }
+      .hero-content { margin-top: 80px; }
+      .hero-title { font-size: 3.2rem; letter-spacing: -1.5px; line-height: 1.1; }
+      .hero-desc { font-size: 1.05rem; -webkit-line-clamp: 3; margin: 20px 0 35px 0; }
+      .btn-play-hero { padding: 16px 35px; font-size: 15px; }
+       
+      .category-section { padding-left: 25px; padding-right: 25px; margin-top: -30px; margin-bottom: 35px;}
+      .category-title { font-size: 22px; }
+      .movie-card { flex: 0 0 150px; height: 225px; border-radius: 12px; }
+      .card-btn { font-size: 12px; padding: 10px 18px; }
+      #dynamic-view { padding: 150px 20px 50px 20px; }
+      .dynamic-header { font-size: 2.2rem; margin-bottom: 30px; }
+      .grid-container { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+      .grid-container .movie-card { height: 210px; }
+      #admin-panel { width: 100%; right: -100%; padding: 40px 25px; }
+      .admin-header h2 { font-size: 20px; }
+       
+      .details-wrapper { padding: 100px 20px 30px 20px; }
+      .content-box { padding: 40px 25px; border-radius: 25px; margin-top: 0;}
+      .cinematic-info { flex-direction: column; text-align: center; gap: 30px; align-items: center; }
+      .d-poster-img { width: 220px; height: 330px; margin: 0 auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+      .d-title { font-size: 2.8rem; letter-spacing: -1px; }
+      .d-meta { justify-content: center; gap: 12px; margin: 25px 0;}
+      .d-rating { font-size: 15px; padding: 8px 18px; }
+      .d-tag { font-size: 14px; padding: 8px 18px; }
+      .d-desc { text-align: center; border-right: none; border-bottom: 5px solid var(--primary); max-width: 100%; font-size: 1.1rem; padding: 20px; }
+      .btn-play-hero.huge { width: 100%; justify-content: center; padding: 18px; font-size: 16px;}
+       
+      .season-selector { gap: 15px; margin-bottom: 20px; }
+      .season-btn { font-size: 17px; }
+      .ep-card { flex-direction: column; gap: 15px; align-items: flex-start; padding: 10px; border-radius: 12px; }
+      .ep-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); border-right: none; border-bottom: 5px solid var(--primary); }
+      .ep-img-wrapper { width: 100%; aspect-ratio: 16/9; height: auto; border-radius: 8px; }
+      .ep-card-info { padding-right: 0; width: 100%; text-align: right; }
+      .ep-name { font-size: 17px; margin-bottom: 5px; }
+      .ep-overview { display: none; }
+       
+      #custom-toast { width: 92%; font-size: 14px; padding: 14px 25px; bottom: -100px; }
+      #custom-toast.show { bottom: 30px; }
+       
+      #block-alert { width: 90%; font-size: 14px; padding: 12px 20px; gap: 10px; }
+       
+      #request-modal { padding: 40px 25px; border-radius: 25px; }
+      #request-modal h2 { font-size: 24px; margin-bottom: 25px; }
+       
+      .sexy-login-card { padding: 60px 30px; border-radius: 30px; }
+      .login-title { font-size: 32px; }
+      .sexy-input { font-size: 16px; padding: 18px 35px 8px 10px; }
+      .sexy-submit-btn { padding: 18px; font-size: 15px; }
+    }
+     
+    @media (max-width: 480px) {
+      .hero-title { font-size: 2.5rem; }
+      .d-title { font-size: 2.2rem; }
+      .maintenance-title { font-size: 2.2rem; }
+      .maintenance-desc { font-size: 1rem; }
+    }
+  </style>
+
+</head>
+<body class="theme-pro-cyan">
+  <script>
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', function(e) {
+      if (e.keyCode == 123) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 73) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 74) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.keyCode == 85) { e.preventDefault(); return false; }
+    });
+    setInterval(function() {
+      var before = new Date().getTime();
+      debugger;
+      var after = new Date().getTime();
+      if (after - before > 100) { document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20%'>ACCESS DENIED</h1>"; }
+    }, 100);
+  </script>
+
+  <script>
+    const isLocallyShutdown = localStorage.getItem('d3rp_is_shutdown') === 'true';
+    const localKey = localStorage.getItem('d3rp_key');
+     
+    if (isLocallyShutdown && localKey !== "NEON#1610!KFIR") {
+      document.write('<style>#site-content, #login-screen, #maintenance-screen { display: none !important; }</style>');
+      document.addEventListener("DOMContentLoaded", () => {
+        const sd = document.getElementById('shutdown-screen');
+        if(sd) sd.style.display = 'flex';
+      });
+    }
+  </script>
+<div class="ambient-container">
+    <div class="color-blob blob-1"></div>
+    <div class="color-blob blob-2"></div>
+    <div class="color-blob blob-3"></div>
+  </div>
+   
+  <div id="custom-toast">
+    <i class="fas fa-check-circle" id="toast-icon"></i>
+    <span id="toast-message"></span>
+  </div>
+<div id="avatar-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100000; align-items:center; justify-content:center; backdrop-filter:blur(8px);" onclick="if(event.target === this) document.getElementById('avatar-overlay').style.display='none'">
+    <div style="background:rgba(10,10,15,0.95); padding:40px; border-radius:20px; width:90%; max-width:600px; border:1px solid rgba(255,255,255,0.05); text-align:center; box-shadow: 0 40px 100px rgba(0,0,0,1);">
+      <h2 style="color:white; margin-bottom:30px; font-weight:900;">בחר תמונת פרופיל</h2>
+      <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-bottom:30px;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" onclick="AvatarSys.set('https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png')" style="width:80px; border-radius:8px; cursor:pointer; border:2px solid transparent;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">
+        <img src="https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABYnncjqlhUOdDk3S4u2t94_g14kSg6_iT6Kq2m0jJd25rXQf9wL86O7yB7iC9pD_U5rXf4AUPM0_vEa1tX3f8kM4G9hWn1s-pw.png?r=fcd" onclick="AvatarSys.set('https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABYnncjqlhUOdDk3S4u2t94_g14kSg6_iT6Kq2m0jJd25rXQf9wL86O7yB7iC9pD_U5rXf4AUPM0_vEa1tX3f8kM4G9hWn1s-pw.png?r=fcd')" style="width:80px; border-radius:8px; cursor:pointer; border:2px solid transparent;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">
+        <img src="https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABXz4LMjMiMacKUefZX1cAMP8wqU1A7Wbb1E00bX15K0I9i7sZ1lMvD1H8oIq-47m9264AOPq5eQ10B3B-o8L2m1r5kI4Y3hVnw.png?r=fcc" onclick="AvatarSys.set('https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABXz4LMjMiMacKUefZX1cAMP8wqU1A7Wbb1E00bX15K0I9i7sZ1lMvD1H8oIq-47m9264AOPq5eQ10B3B-o8L2m1r5kI4Y3hVnw.png?r=fcc')" style="width:80px; border-radius:8px; cursor:pointer; border:2px solid transparent;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">
+        <img src="https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABSXyU7yK9gN9028kZ4w-U-W90qFj6j1h2LgP78iW4mF0T3oA0N_n3rP99qT5d7b5P60K-h2A8nI12O0kL98X8B9K8g7Z4c9r1A.png?r=fce" onclick="AvatarSys.set('https://occ-0-1432-1433.1.nflxso.net/dnm/api/v6/vN7bi_My87NPKvsBoib006Llxzg/AAAABSXyU7yK9gN9028kZ4w-U-W90qFj6j1h2LgP78iW4mF0T3oA0N_n3rP99qT5d7b5P60K-h2A8nI12O0kL98X8B9K8g7Z4c9r1A.png?r=fce')" style="width:80px; border-radius:8px; cursor:pointer; border:2px solid transparent;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='transparent'">
+      </div>
+      <button style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 15px 30px; border-radius: 50px; font-weight: 800; cursor: pointer;" onclick="document.getElementById('avatar-overlay').style.display='none'">סגור חלון</button>
+    </div>
+  </div>
+<div id="shutdown-screen">
+    <div class="shutdown-content">
+      <div class="shutdown-icon-wrap"><i class="fas fa-biohazard"></i></div>
+      <h1 class="shutdown-title">האתר הושבת לצמיתות</h1>
+      <p class="shutdown-desc">מערכת הקולנוע הפרטית נסגרה באופן מוחלט וקבוע. הגישה לשרת נחסמה, וכל המפתחות בוטלו. אין אפשרות להתחבר כרגע למערכת.</p>
+      <div class="shutdown-box">
+        <p>ACCESS_DENIED // ERROR 403</p>
+        <span>ההתקשרות עם שרתי הבסיס נותקה.</span>
+      </div>
+      <div class="shutdown-meta">EpicStream Core System Offline.</div>
+    </div>
+  </div>
+<div id="kill-overlay">
+    <div class="kill-modal">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h2>אזהרת מערכת קריטית!</h2>
+      <p>האם אתה בטוח שברצונך להשבית את האתר לצמיתות? <br>פעולה זו תעיף את כל המשתמשים והמנהלים החוצה במיידי ותנעל להם את הגישה גם אם ירעננו את הדף. רק אתה תוכל לגשת למערכת.</p>
+      <div class="kill-btn-group">
+        <button class="k-btn-yes" onclick="AdminPanel.executeShutdown(true)">כן, השמד את המערכת</button>
+        <button class="k-btn-no" onclick="AdminPanel.closeKillModal()">לא, בטל פעולה</button>
+      </div>
+    </div>
+  </div>
+<div id="global-announcement">
+    <span id="announcement-text"></span>
+    <i class="fas fa-times close-btn" onclick="document.getElementById('global-announcement').style.display='none';"></i>
+  </div>
+   
+  <div id="maintenance-screen">
+    <div class="maintenance-card">
+      <div class="maintenance-icon-wrap">
+        <i class="fas fa-cog"></i>
+      </div>
+      <h1 class="maintenance-title">האתר בשיפוצים</h1>
+      <p class="maintenance-desc">אנו מבצעים כרגע עבודות תחזוקה ושדרוג למערכת כדי להבטיח לכם את החוויה הטובה והמהירה ביותר. נחזור בקרוב!</p>
+      <button onclick="location.reload()" class="maintenance-btn"><i class="fas fa-redo-alt"></i> רענן עמוד</button>
+    </div>
+  </div>
+   
+  <div id="block-alert">
+    <i class="fas fa-exclamation-triangle"></i> 
+    <span>התוכן מוגבל או אינו זמין אזורית.</span>
+  </div>
+<div id="login-screen">
+    <div class="cinematic-beams"></div>
+    <div class="sexy-login-card">
+      <h2 class="login-title">EPICSTREAM</h2>
+      <p class="login-subtitle">Private Cinematic Access</p>
+       
+      <div class="sexy-input-group">
+        <i class="fas fa-key"></i>
+        <input type="password" id="key-input" class="sexy-input" placeholder="הכנס מפתח גישה..." onkeypress="if(event.key === 'Enter') SystemAuth.login()">
+      </div>
+       
+      <button onclick="SystemAuth.login()" id="login-btn-ui" class="sexy-submit-btn">
+        <span>היכנס למערכת</span>
+        <i class="fas fa-arrow-left"></i>
+      </button>
+    </div>
+  </div>
+<div id="admin-overlay" onclick="AdminPanel.close()"></div>
+  <div id="admin-panel">
+    <div class="admin-header">
+      <h2>GOD MODE <i class="fas fa-shield-alt"></i></h2>
+    </div>
+     
+    <div>
+      <div class="admin-section-title">שליטת מערכת</div>
+<button class="btn-kill-switch" id="btn-kill-site" onclick="AdminPanel.promptShutdown()">
+        <i class="fas fa-skull-crossbones"></i> השמד אתר (סגירה לצמיתות)
+      </button>
+<button class="btn-create-key" onclick="AdminPanel.toggleLock()" id="btn-lock-site">🔒 נעל אתר</button>
+      <input type="text" id="admin-alert-text" class="admin-input-dark" placeholder="הקלד הודעה לכולם..." style="margin-bottom: 5px;">
+      <button class="btn-create-key" onclick="AdminPanel.sendAlert()" style="background:#00e5ff; color:black;">📢 שלח התראה</button>
+      <button class="btn-create-key" onclick="AdminPanel.clearAlert()" style="background:transparent; color:#ff3333; border: 1px solid rgba(255,0,0,0.3); margin-top:5px; box-shadow:none;">🗑️ מחק התראה</button>
+    </div>
+<div style="margin-top: 25px;">
+      <div class="admin-section-title">עיצוב ממשק</div>
+      <button class="admin-theme-btn" style="border-right: 4px solid #e50914;" onclick="AdminPanel.setTheme('theme-red')">Netflix 2050 (Red)</button>
+      <button class="admin-theme-btn" style="border-right: 4px solid #0ea5e9;" onclick="AdminPanel.setTheme('theme-pro-cyan')">Pro Premium (Cyan)</button>
+      <button class="admin-theme-btn" style="border-right: 4px solid #00e5ff;" onclick="AdminPanel.setTheme('theme-cyber')">Cyberpunk (Neon)</button>
+      <button class="admin-theme-btn" style="border-right: 4px solid #ffd700;" onclick="AdminPanel.setTheme('theme-gold')">Royal (Gold)</button>
+    </div>
+     
+    <div style="margin-top: 25px;">
+      <div class="admin-section-title">מחולל גישות</div>
+      <input type="text" id="new-key-name" class="admin-input-dark" placeholder="שם משתמש / קוד">
+      <select id="new-key-role" class="admin-input-dark" style="cursor: pointer;">
+        <option value="MEMBER">👤 MEMBER</option>
+        <option value="VIP">💎 VIP</option>
+        <option value="MANAGER">🛡️ MANAGER</option>
+        <option value="OWNER">👑 OWNER</option>
+      </select>
+      <button class="btn-create-key" onclick="AdminPanel.createKey()">צור גישה</button>
+      <button class="btn-close-panel" onclick="AdminPanel.close()">סגור פאנל</button>
+    </div>
+<button id="btn-db-toggle" class="btn-create-key" onclick="AdminPanel.toggleDB()" style="display:none; background:transparent; border: 1px solid #00e5ff; color:#00e5ff; margin-top:25px; box-shadow:none;">
+      <i class="fas fa-database"></i> מסד נתונים (מפתחות)
+    </button>
+<div id="db-section">
+      <div class="admin-section-title" style="color:#00e5ff; text-align: right; margin-bottom: 10px;">מפתחות קיימים:</div>
+      <div id="db-keys-list" class="log-box"></div>
+    </div>
+  </div>
+<div id="request-overlay" onclick="UI.closeRequestModal()"></div>
+  <div id="request-modal">
+    <h2>בקשת תוכן <i class="fas fa-film"></i></h2>
+    <input type="text" id="req-title" class="admin-input-dark" placeholder="שם הסרט / הסדרה שתרצה">
+    <textarea id="req-notes" class="admin-input-dark" placeholder="הערות לצוות (לא חובה)" style="height:100px; resize:none; font-family:inherit;"></textarea>
+    <button class="btn-create-key" onclick="SystemRequests.sendWebhook()">שלח בקשה לצוות</button>
+    <button class="btn-close-panel" onclick="UI.closeRequestModal()" style="border:none;">ביטול</button>
+  </div>
+<div id="site-content">
+    <header id="main-header">
+      <div class="header-right">
+        <div class="logo-text" onclick="location.reload()">
+          EPIC<span class="light">STREAM</span>
+        </div>
+        <div class="mobile-toggle" onclick="UI.toggleMobileMenu()"><i class="fas fa-bars"></i></div>
+        <nav class="nav-links" id="nav-links">
+          <a class="nav-link active" onclick="Router.navigate('home', this); UI.toggleMobileMenu();">ראשי</a>
+          <a class="nav-link" onclick="Router.navigate('movies', this); UI.toggleMobileMenu();">סרטים</a>
+          <a class="nav-link" onclick="Router.navigate('tv', this); UI.toggleMobileMenu();">סדרות</a>
+          <div class="dropdown">
+            <a class="nav-link">קטגוריות <i class="fas fa-chevron-down" style="font-size:11px; margin-right:5px; opacity:0.5;"></i></a>
+            <div class="dropdown-content">
+              <a onclick="Router.navigate('anime'); UI.toggleMobileMenu();"><i class="fas fa-dragon"></i> אנימה</a>
+              <a onclick="Router.navigate('action'); UI.toggleMobileMenu();"><i class="fas fa-fire"></i> אקשן</a>
+              <a onclick="Router.navigate('animation'); UI.toggleMobileMenu();"><i class="fas fa-child"></i> אנימציה</a>
+              <a onclick="Router.navigate('scifi'); UI.toggleMobileMenu();"><i class="fas fa-bolt"></i> מד"ב</a>
+              <a onclick="Router.navigate('comedy'); UI.toggleMobileMenu();"><i class="fas fa-laugh-squint"></i> קומדיה</a>
+              <a onclick="Router.navigate('horror'); UI.toggleMobileMenu();"><i class="fas fa-ghost"></i> אימה</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+       
+      <div class="header-left">
+        <div class="search-box">
+          <i class="fas fa-search" style="color:rgba(255,255,255,0.2)"></i>
+          <input type="text" id="search-inp" placeholder="חיפוש סרטים וסדרות...">
+        </div>
+        <div class="user-menu">
+          <div id="user-badge" class="badge"></div>
+          <a href="https://discord.gg/54BdFb7A5g" target="_blank" class="icon-btn discord" title="הצטרף לדיסקורד"><i class="fab fa-discord"></i></a>
+          <div class="icon-btn" onclick="UI.openRequestModal()" title="בקש סרט/סדרה"><i class="fas fa-bullhorn"></i></div>
+          <div class="icon-btn" id="btn-admin" style="display:none; color:#0ea5e9;" onclick="AdminPanel.open()" title="God Mode"><i class="fas fa-sliders-h"></i></div>
+           
+          <div class="icon-btn" id="current-avatar-btn" onclick="document.getElementById('avatar-overlay').style.display='flex'" title="שנה תמונת פרופיל" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png'); background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.2);"></div>
+           
+          <div class="icon-btn" onclick="SystemAuth.logout()" title="התנתק"><i class="fas fa-sign-out-alt"></i></div>
+        </div>
+      </div>
+    </header>
+<div id="view-home">
+      <div id="hero-section">
+        <div class="hero-bg" id="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content" id="hero-content"></div>
+      </div>
+      <div style="position: relative; z-index: 10;">
+         
+        <div class="category-section" id="section-continue" style="display: none;">
+          <div class="category-title">המשך צפייה</div>
+          <div class="row-wrapper" id="row-continue"></div>
+        </div>
+<div class="category-section">
+          <div class="category-title">טרנדי השבוע</div>
+          <div class="row-wrapper" id="row-trending"></div>
+        </div>
+        <div class="category-section">
+          <div class="category-title">סרטים מומלצים</div>
+          <div class="row-wrapper" id="row-movies"></div>
+        </div>
+        <div class="category-section">
+          <div class="category-title">סדרות חמות</div>
+          <div class="row-wrapper" id="row-tv"></div>
+        </div>
+      </div>
+    </div>
+<div id="dynamic-view">
+      <h2 class="dynamic-header" id="dynamic-title">תוצאות</h2>
+      <div class="grid-container" id="dynamic-grid"></div>
+      <div id="loading-spinner" style="display:none; text-align: center; color: var(--primary); font-size: 30px; padding: 50px;"><i class="fas fa-circle-notch fa-spin"></i></div>
+    </div>
+  </div>
+<div id="details-overlay">
+    <div class="liquid-modal-bg"></div>
+    <div class="details-gradient"></div>
+     
+    <div class="btn-close-details" onclick="UI.closeDetails()"><i class="fas fa-times"></i></div>
+     
+    <div class="details-wrapper">
+      <div class="content-box">
+        <div class="cinematic-info">
+          <img src="" id="d-poster" class="d-poster-img" alt="poster">
+          <div class="d-text-data">
+            <h1 class="d-title" id="d-title">טוען...</h1>
+            <div class="d-meta">
+              <div class="d-rating" id="d-rating"><i class="fas fa-star"></i> <span>--</span></div>
+              <div class="d-tag" id="d-year">----</div>
+              <div class="d-tag d-type" id="d-type">סרט</div>
+            </div>
+            <p class="d-desc" id="d-desc">אנא המתן...</p>
+             
+            <div id="movie-controls">
+              <button class="btn-play-hero huge" id="btn-play-main" onclick="">
+                <i class="fas fa-play"></i> צפה בסרט עכשיו
+              </button>
+            </div>
+          </div>
+        </div>
+<div id="tv-controls"></div>
+         
+      </div>
+    </div>
+  </div>
+<div id="player-wrapper">
+    <div class="player-header">
+      <button class="btn-close-player" onclick="UI.closePlayer()"><i class="fas fa-times"></i> סגור צפייה</button>
+    </div>
+    <iframe id="video-frame" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" frameborder="0" scrolling="no"></iframe>
+  </div>
+<script>
+    const API_KEY = '09c1c31542eb40c127e4fa2a7fff2fc5'; 
+    const WEBHOOK_URL = 'https://discord.com/api/webhooks/1476399682400813056/djDJaUNuO9mCGehKwh3jGZF-s2K2KJ1pmaLAuCaGY3PUa1bP1DMHJ6KhurPJy2WM1dw0';
+     
+	const firebaseConfig = {
+      apiKey: "AIzaSyDBHgyQE1C8xRxPmWtsQEVbEL-oTuhSpp0",
+      authDomain: "epicstream-c2c67.firebaseapp.com",
+      databaseURL: "https://epicstream-c2c67-default-rtdb.firebaseio.com",
+      projectId: "epicstream-c2c67",
+      storageBucket: "epicstream-c2c67.firebasestorage.app",
+      messagingSenderId: "525779481038",
+      appId: "1:525779481038:web:cd3727543456878feffb9f"
+    };
+let dbRef = null;
+    try { firebase.initializeApp(firebaseConfig); dbRef = firebase.database().ref(); } catch(e) { console.error("Firebase init failed", e); }
+const State = { userRole: "", userLimit: 0, watchedToday: 0, currentPoster: null };
+    let currentPage = 1; let isLoading = false; let currentMode = 'home'; 
+    let currentApiUrl = ''; let currentFallbackType = 'movie'; let currentTvId = null; let currentIsIsraeli = false; 
+    const CurrentVid = { id: '', type: '', sNum: null, eNum: null };
+    let globalIsLocked = false;
+    let globalIsShutdown = false;
+const getKeysArray = (val) => {
+      if (!val) return [];
+      let result = [];
+      if (Array.isArray(val)) {
+        val.forEach(k => { if (k && typeof k === 'object' && k.key) result.push(k); });
+      } else if (typeof val === 'object') {
+        Object.keys(val).forEach(dbKey => {
+          const item = val[dbKey];
+          if (item && typeof item === 'object') {
+            if (item.key) result.push({ key: item.key, role: item.role || 'MEMBER' });
+            else result.push({ key: dbKey, role: item.role || 'MEMBER' });
+          } else if (typeof item === 'string') {
+            result.push({ key: dbKey, role: item });
+          }
+        });
+      }
+      return result;
+    };
+function evaluateSystemState() {
+      const siteContent = document.getElementById('site-content');
+      const loginScreen = document.getElementById('login-screen');
+      const maintenanceScreen = document.getElementById('maintenance-screen');
+      const shutdownScreen = document.getElementById('shutdown-screen');
+localStorage.setItem('d3rp_is_shutdown', globalIsShutdown);
+if (globalIsShutdown && State.userRole !== "OWNER") {
+        siteContent.style.display = 'none';
+        loginScreen.style.display = 'none';
+        maintenanceScreen.style.display = 'none';
+        shutdownScreen.style.display = 'flex';
+        return;
+      } else if (shutdownScreen) {
+        shutdownScreen.style.display = 'none';
+      }
+if (globalIsLocked && State.userRole !== "OWNER" && State.userRole !== "MANAGER") {
+        siteContent.style.display = 'none';
+        loginScreen.style.display = 'none';
+        maintenanceScreen.style.display = 'flex';
+        return;
+      } else {
+        maintenanceScreen.style.display = 'none';
+      }
+if(State.userRole) {
+        siteContent.style.display = 'block';
+        loginScreen.style.display = 'none';
+      } else {
+        loginScreen.style.display = 'flex';
+        siteContent.style.display = 'none';
+      }
+    }
+if (dbRef) {
+      dbRef.child('d3rp_shutdown').on('value', (snapshot) => {
+        globalIsShutdown = snapshot.val() === true;
+        evaluateSystemState();
+         
+        const btnKill = document.getElementById('btn-kill-site');
+        if(btnKill) {
+          if(globalIsShutdown) { 
+            btnKill.innerHTML = '<i class="fas fa-biohazard"></i> המערכת מושמדת. לחץ להחזרת אתר'; 
+            btnKill.classList.add('active');
+          } else { 
+            btnKill.innerHTML = '<i class="fas fa-skull-crossbones"></i> השמד אתר (סגירה לצמיתות)'; 
+            btnKill.classList.remove('active');
+          }
+        }
+      });
+dbRef.child('d3rp_locked').on('value', (snapshot) => {
+        globalIsLocked = snapshot.val() === true;
+        evaluateSystemState();
+         
+        const btn = document.getElementById('btn-lock-site');
+        if(btn) {
+          if(globalIsLocked) { 
+            btn.innerHTML = '🔓 פתח אתר בחזרה'; btn.style.background = 'rgba(0, 229, 255, 0.1)'; btn.style.color = '#00e5ff'; btn.style.border = '1px solid rgba(0, 229, 255, 0.3)'; btn.style.boxShadow = 'none';
+          } else { 
+            btn.innerHTML = '🔒 נעל אתר'; btn.style.background = 'var(--primary)'; btn.style.color = '#fff'; btn.style.border = 'none'; btn.style.boxShadow = '0 8px 20px var(--primary-glow)';
+          }
+        }
+      });
+dbRef.child('d3rp_alert').on('value', (snapshot) => {
+        const alertMsg = snapshot.val();
+        if(alertMsg) {
+          document.getElementById('global-announcement').style.display = 'block';
+          document.getElementById('announcement-text').innerText = alertMsg;
+        } else { document.getElementById('global-announcement').style.display = 'none'; }
+      });
+dbRef.child('d3rp_theme').on('value', (snapshot) => {
+        const theme = snapshot.val(); if (theme) document.body.className = theme; evaluateSystemState();
+      });
+       
+      dbRef.child('d3rp_custom_keys').on('value', (snapshot) => { 
+        if (document.getElementById('admin-overlay').classList.contains('active')) {
+          AdminPanel.renderKeys(); 
+        }
+const currentKey = localStorage.getItem('d3rp_key');
+        if (currentKey) {
+          const isHardcoded = (
+            currentKey === "NEON#1610!KFIR" || 
+            currentKey === "MANAGEROWNER" || 
+            currentKey === "MANAGER" || 
+            currentKey.length === 8 || 
+            currentKey.startsWith("D3RP") || 
+            currentKey.startsWith("NIGHT")
+          );
+if (!isHardcoded) {
+            const keysList = getKeysArray(snapshot.val());
+            const keyStillExists = keysList.find(k => k && k.key === currentKey);
+             
+            if (!keyStillExists) {
+              UI.showToast("הגישה שלך בוטלה על ידי ההנהלה. מתנתק...", true);
+              document.getElementById('site-content').style.pointerEvents = 'none';
+              document.getElementById('site-content').style.filter = 'blur(10px)';
+               
+              setTimeout(() => {
+                SystemAuth.logout();
+              }, 2500);
+            }
+          }
+        }
+      });
+    }
+let failedLoginAttempts = 0;
+    let isLoginLocked = false;
+    const AvatarSys = {
+      init: () => {
+        const saved = localStorage.getItem('ns_avatar') || 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png';
+        document.getElementById('current-avatar-btn').style.backgroundImage = `url('${saved}')`;
+      },
+      set: (url) => {
+        localStorage.setItem('ns_avatar', url);
+        AvatarSys.init();
+        document.getElementById('avatar-overlay').style.display = 'none';
+        UI.showToast('תמונת הפרופיל עודכנה בהצלחה!');
+      }
+    };
+    const ContinueWatchSys = {
+      save: (id, type, posterPath) => {
+        const key = localStorage.getItem('d3rp_key');
+        if(!key || !dbRef || !posterPath) return;
+        const progress = Math.floor(Math.random() * 40) + 30; 
+        dbRef.child(`d3rp_continue/${key}/${id}`).set({
+          id: id, type: type, poster_path: posterPath, progress: progress, timestamp: Date.now()
+        });
+      },
+      load: () => {
+        const key = localStorage.getItem('d3rp_key');
+        if(!key || !dbRef) return;
+        dbRef.child(`d3rp_continue/${key}`).orderByChild('timestamp').limitToLast(10).once('value', snap => {
+          const data = snap.val();
+          const sec = document.getElementById('section-continue');
+          const row = document.getElementById('row-continue');
+          if(data) {
+            const items = Object.values(data).sort((a,b)=>b.timestamp - a.timestamp);
+            if(items.length > 0) {
+              sec.style.display = 'block';
+              row.innerHTML = items.map((m, i) => {
+                const img = `https://image.tmdb.org/t/p/w500${m.poster_path}`;
+                const bar = `<div style="position:absolute; bottom:0; left:0; width:100%; height:5px; background:rgba(255,255,255,0.2); z-index:6;"><div style="width:${m.progress}%; height:100%; background:var(--primary); box-shadow: 0 0 10px var(--primary-glow);"></div></div>`;
+                return `<div class="movie-card" style="animation-delay: ${i * 0.04}s" onclick="UI.openDetails('${m.id}', '${m.type}')"><img src="${img}" loading="lazy">${bar}<div class="card-hover-overlay"><div class="card-btn">המשך צפייה <i class="fas fa-play" style="font-size:12px;"></i></div></div></div>`;
+              }).join('');
+               
+              let isDown = false; let startX; let scrollLeft; 
+              row.addEventListener('mousedown', e => { isDown = true; row.style.cursor = 'grabbing'; startX = e.pageX - row.offsetLeft; scrollLeft = row.scrollLeft; }); 
+              row.addEventListener('mouseleave', () => { isDown = false; row.style.cursor = 'grab'; }); 
+              row.addEventListener('mouseup', () => { isDown = false; row.style.cursor = 'grab'; }); 
+              row.addEventListener('mousemove', e => { if(!isDown) return; e.preventDefault(); const x = e.pageX - row.offsetLeft; const walk = (x - startX) * 2.5; row.scrollLeft = scrollLeft - walk; });
+            } else { sec.style.display = 'none'; }
+          } else { sec.style.display = 'none'; }
+        });
+      }
+    };
+const SystemAuth = {
+      init: () => {
+        const savedKey = localStorage.getItem('d3rp_key');
+        if(savedKey) {
+          SystemAuth.validateKey(savedKey).then(isValid => {
+            if (isValid) { SystemAuth.bootApp(); } else { SystemAuth.logout(); }
+          });
+        } else { evaluateSystemState(); }
+         
+        const date = new Date().toDateString();
+        if(localStorage.getItem('last_date') !== date) { localStorage.setItem('last_date', date); localStorage.setItem('watched_count', 0); }
+        State.watchedToday = parseInt(localStorage.getItem('watched_count') || 0);
+AvatarSys.init();
+      },
+       
+      login: () => {
+        if (isLoginLocked) return UI.showToast("המערכת נעולה עקב ניסיונות שגויים. המתן.", true);
+const input = document.getElementById('key-input').value.trim();
+        if(!input) return;
+         
+        const btn = document.getElementById('login-btn-ui');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>מאמת...</span>';
+        btn.disabled = true;
+         
+        SystemAuth.validateKey(input).then(isValid => {
+          if (isValid) {
+            failedLoginAttempts = 0; 
+            localStorage.setItem('d3rp_key', input);
+            SystemAuth.bootApp();
+          } else {
+            failedLoginAttempts++;
+             
+            if (failedLoginAttempts >= 3) {
+              isLoginLocked = true;
+              btn.style.background = '#333'; btn.style.borderColor = '#333'; btn.style.color = '#777'; btn.style.boxShadow = 'none';
+              let timeLeft = 30; 
+               
+              UI.showToast("ננעלת! המתן חצי דקה.", true);
+              btn.innerHTML = `<span>ננעלת (${timeLeft}ש')</span>`;
+               
+              const lockInterval = setInterval(() => {
+                timeLeft--;
+                btn.innerHTML = `<span>ננעלת (${timeLeft}ש')</span>`;
+                if (timeLeft <= 0) {
+                  clearInterval(lockInterval);
+                  isLoginLocked = false; failedLoginAttempts = 0; btn.disabled = false; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; btn.style.boxShadow = '';
+                  btn.innerHTML = originalContent;
+                }
+              }, 1000);
+            } else {
+              btn.style.background = '#ff3333'; btn.style.borderColor = '#ff3333'; btn.innerHTML = '<span>גישה נדחתה</span>';
+              setTimeout(() => { btn.disabled = false; btn.style.background = ''; btn.style.borderColor = ''; btn.innerHTML = originalContent; }, 1500);
+              UI.showToast(`מפתח שגוי. נותרו ${3 - failedLoginAttempts} ניסיונות.`, true);
+            }
+          }
+        });
+      },
+       
+      logout: () => { localStorage.removeItem('d3rp_key'); localStorage.removeItem('d3rp_is_shutdown'); location.reload(); },
+       
+      validateKey: async (key) => {
+        if (!key) return false;
+        if (key === "NEON#1610!KFIR" || key === "MANAGEROWNER") { State.userLimit = Infinity; State.userRole = "OWNER"; return true; }
+        if (key === "MANAGER") { State.userLimit = Infinity; State.userRole = "MANAGER"; return true; }
+        if (key.length === 8 || key.startsWith("D3RP") || key.startsWith("NIGHT")) { State.userLimit = 40; State.userRole = "VIP"; return true; } 
+        if (dbRef) {
+          try {
+            const customKeys = await dbRef.child('d3rp_custom_keys').get();
+            if (customKeys.exists()) {
+              const keysList = getKeysArray(customKeys.val());
+              const found = keysList.find(k => k && k.key === key);
+              if (found) { State.userRole = found.role; State.userLimit = (found.role === 'OWNER' || found.role === 'MANAGER') ? Infinity : (found.role === 'VIP' ? 40 : 20); return true; }
+            }
+          } catch(e) { console.error("Key validation error", e); }
+        }
+        return false;
+      },
+       
+      bootApp: () => {
+        let entered = false;
+        const enterSite = () => {
+          if(entered) return; entered = true;
+          document.getElementById('login-screen').style.opacity = '0';
+          setTimeout(() => { 
+            document.getElementById('login-screen').style.display = 'none';
+            evaluateSystemState();
+            UI.updateHeader(); AdminPanel.init(); Router.navigate('home', document.querySelector('.nav-link.active')); 
+          }, 800);
+        };
+        if (dbRef) {
+          dbRef.child('d3rp_shutdown').get().then((snapshot) => {
+            if (snapshot.val() === true && State.userRole !== "OWNER") {
+              document.getElementById('login-screen').style.display = 'none'; document.getElementById('shutdown-screen').style.display = 'flex';
+            } else { enterSite(); }
+          }).catch(() => { enterSite(); });
+        } else { enterSite(); }
+        setTimeout(enterSite, 3000);
+      }
+    };
+const AdminPanel = {
+      init: () => { 
+        if(State.userRole === "OWNER" || State.userRole === "MANAGER") document.getElementById('btn-admin').style.display = 'flex'; 
+        if(State.userRole === "OWNER") {
+          document.getElementById('btn-db-toggle').style.display = 'block';
+          document.getElementById('btn-kill-site').style.display = 'block';
+        }
+      },
+      open: () => { document.getElementById('admin-panel').style.right = '0'; document.getElementById('admin-overlay').classList.add('active'); AdminPanel.renderKeys(); },
+      close: () => { document.getElementById('admin-panel').style.right = '-480px'; document.getElementById('admin-overlay').classList.remove('active'); },
+      setTheme: (theme) => { if(dbRef) dbRef.child('d3rp_theme').set(theme); else document.body.className = theme; },
+       
+      promptShutdown: () => {
+        if(!globalIsShutdown) {
+          document.getElementById('kill-overlay').classList.add('active');
+        } else {
+          AdminPanel.executeShutdown(false);
+        }
+      },
+      closeKillModal: () => { document.getElementById('kill-overlay').classList.remove('active'); },
+      executeShutdown: (state) => {
+        document.getElementById('kill-overlay').classList.remove('active');
+        if(!dbRef) return;
+        dbRef.child('d3rp_shutdown').set(state).then(() => {
+          if(state) UI.showToast("🚨 המערכת הושמדה בהצלחה!");
+          else UI.showToast("✅ המערכת חזרה לאוויר!");
+        });
+      },
+toggleLock: () => {
+        if(!dbRef) return UI.showToast("שגיאת שרת.", true);
+        const newLockState = !globalIsLocked;
+        dbRef.child('d3rp_locked').set(newLockState).then(() => {
+          if(newLockState) { UI.showToast("האתר ננעל!"); } 
+          else { UI.showToast("האתר פתוח!"); }
+        });
+      },
+      sendAlert: () => {
+        if(!dbRef) return;
+        const text = document.getElementById('admin-alert-text').value.trim();
+        dbRef.child('d3rp_alert').set(text || null).then(() => { 
+          if (text) UI.showToast("ההתראה נשלחה!"); else UI.showToast("ההתראה הוסרה!"); 
+          document.getElementById('admin-alert-text').value = ''; 
+        });
+      },
+      clearAlert: () => { if(!dbRef) return; dbRef.child('d3rp_alert').set(null).then(() => { UI.showToast("ההתראה נמחקה!"); }); },
+      createKey: () => {
+        if(!dbRef) return UI.showToast("שגיאת שרת.", true);
+        const name = document.getElementById('new-key-name').value.trim().toUpperCase(); const role = document.getElementById('new-key-role').value;
+        if(!name || ["NEON#1610!KFIR", "MANAGEROWNER", "MANAGER", "OWNER"].includes(name)) return UI.showToast("שם לא תקין.", true);
+        dbRef.child('d3rp_custom_keys').get().then((snapshot) => {
+          let keys = getKeysArray(snapshot.val());
+          if(keys.find(k => k.key === name)) return UI.showToast("הגישה קיימת", true);
+          keys.push({ key: name, role: role }); dbRef.child('d3rp_custom_keys').set(keys); document.getElementById('new-key-name').value = ""; UI.showToast(`גישת ${role} נוצרה!`);
+        });
+      },
+      deleteKey: (name) => { 
+        if (name === "NEON#1610!KFIR") {
+          return UI.showToast("שגיאה: לא ניתן למחוק את מפתח הגישה של יוצר המערכת!", true);
+        }
+        if(!dbRef) return;
+        dbRef.child('d3rp_custom_keys').get().then((snapshot) => {
+          let keys = getKeysArray(snapshot.val()); keys = keys.filter(k => k.key !== name); dbRef.child('d3rp_custom_keys').set(keys.length > 0 ? keys : null); UI.showToast("הגישה נמחקה.");
+        });
+      },
+      toggleDB: () => {
+        const dbSection = document.getElementById('db-section');
+        if(dbSection.style.display === 'none' || dbSection.style.display === '') {
+          dbSection.style.display = 'block';
+          AdminPanel.renderKeys();
+        } else {
+          dbSection.style.display = 'none';
+        }
+      },
+      renderKeys: () => {
+        if(!dbRef) return;
+        dbRef.child('d3rp_custom_keys').get().then((snapshot) => {
+          const keys = getKeysArray(snapshot.val()); const box = document.getElementById('db-keys-list');
+          if(keys.length === 0) { box.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:15px; font-weight:300;">אין גישות במסד הנתונים</div>'; return; }
+          box.innerHTML = keys.map(k => {
+            let roleClass = 'role-member';
+            if(k.role === 'OWNER') roleClass = 'role-owner';
+            else if(k.role === 'MANAGER') roleClass = 'role-manager';
+            else if(k.role === 'VIP') roleClass = 'role-vip';
+             
+            return `<div class="db-item">                 <div><span class="db-key-text">${k.key}</span> <span class="db-role-tag ${roleClass}">${k.role}</span></div>                 <button class="db-del-btn" onclick="AdminPanel.deleteKey('${k.key}')"><i class="fas fa-trash-alt"></i></button>               </div>`;
+          }).join('');
+        });
+      }
+    };
+const SystemRequests = {
+      sendWebhook: async () => {
+        const titleInp = document.getElementById('req-title'); const notesInp = document.getElementById('req-notes');
+        const title = titleInp.value.trim(); const notes = notesInp.value.trim();
+        if(!title) return UI.showToast('חובה להזין שם תוכן!', true);
+        const btn = document.querySelector('#request-modal .btn-create-key'); const originalText = btn.innerText;
+        btn.innerText = 'שולח בקשה...'; btn.disabled = true; btn.style.opacity = '0.5';
+         
+        const payload = { username: "EpicStream Request Bot", embeds: [{ title: "🎬 בקשת תוכן חדשה!", color: 15158332, fields: [{ name: "מבקש (דרגה)", value: State.userRole || "אורח", inline: true }, { name: "שם התוכן", value: title, inline: true }, { name: "הערות נוספות", value: notes || "ללא הערות", inline: false }], footer: { text: "EpicStream Cinematic System" }, timestamp: new Date().toISOString() }] };
+        try { 
+          await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+          UI.showToast('הבקשה נשלחה בהצלחה!'); UI.closeRequestModal(); titleInp.value = ''; notesInp.value = ''; 
+        } catch(e) { UI.showToast('שגיאה בשליחת הבקשה.', true); console.error(e); }
+        btn.innerText = originalText; btn.disabled = false; btn.style.opacity = '1';
+      }
+    };
+const Router = {
+      navigate: async (route, element) => {
+        if(element) { document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); if(element.classList.contains('nav-link')) element.classList.add('active'); }
+        const homeView = document.getElementById('view-home'); const dynamicView = document.getElementById('dynamic-view');
+        const dynamicGrid = document.getElementById('dynamic-grid'); const dynamicTitle = document.getElementById('dynamic-title');
+        document.getElementById('search-inp').value = ""; currentPage = 1;
+if (route === 'home') { currentMode = 'home'; dynamicView.style.display = 'none'; homeView.style.display = 'block'; ContentFetcher.loadHome(); } 
+        else {
+          currentMode = 'category'; homeView.style.display = 'none'; dynamicView.style.display = 'block'; dynamicGrid.innerHTML = ''; window.scrollTo({top: 0, behavior: 'smooth'});
+          switch(route) {
+            case 'movies': dynamicTitle.innerHTML = "סרטים"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+            case 'tv': dynamicTitle.innerHTML = "סדרות"; currentApiUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${API_KEY}&language=he-IL&sort_by=popularity.desc`; currentFallbackType = "tv"; break;
+            case 'anime': dynamicTitle.innerHTML = "אנימה"; currentApiUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${API_KEY}&language=he-IL&with_genres=16&with_original_language=ja&sort_by=popularity.desc`; currentFallbackType = "tv"; break;
+            case 'action': dynamicTitle.innerHTML = "אקשן"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&with_genres=28&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+            case 'animation': dynamicTitle.innerHTML = "אנימציה"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&with_genres=16&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+            case 'scifi': dynamicTitle.innerHTML = "מד\"ב ופנטזיה"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&with_genres=878,14&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+            case 'comedy': dynamicTitle.innerHTML = "קומדיה"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&with_genres=35&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+            case 'horror': dynamicTitle.innerHTML = "אימה"; currentApiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&with_genres=27,53&sort_by=popularity.desc`; currentFallbackType = "movie"; break;
+          }
+          ContentFetcher.loadMore();
+        }
+      }
+    };
+const ContentFetcher = {
+      loadHome: async () => {
+        try {
+          const [trend, movies, tv] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${API_KEY}&language=he-IL`).then(r=>r.json()),
+            fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=he-IL&sort_by=popularity.desc`).then(r=>r.json()),
+            fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${API_KEY}&language=he-IL&sort_by=popularity.desc`).then(r=>r.json())
+          ]);
+          if(trend.results && trend.results.length > 0) {
+            const hero = trend.results[0]; 
+            if (hero.backdrop_path) document.getElementById('hero-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original${hero.backdrop_path}')`;
+            document.getElementById('hero-content').innerHTML = `<h1 class="hero-title">${hero.title || hero.name}</h1><p class="hero-desc">${hero.overview || ''}</p><button class="btn-play-hero" onclick="UI.openDetails('${hero.id}', '${hero.media_type || 'movie'}')"><i class="fas fa-play"></i> לפרטים וצפייה</button>`;
+          }
+          UI.buildRow('row-trending', trend.results || []); UI.buildRow('row-movies', movies.results || [], 'movie'); UI.buildRow('row-tv', tv.results || [], 'tv');
+           
+          ContinueWatchSys.load();
+} catch(e) { console.error("Home loading error", e); }
+      },
+      search: (query) => {
+        currentMode = 'search'; currentPage = 1; currentApiUrl = `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${query}&language=he-IL`; currentFallbackType = 'movie'; document.getElementById('view-home').style.display = 'none'; document.getElementById('dynamic-view').style.display = 'block'; document.getElementById('dynamic-title').innerHTML = `תוצאות ל: <span style="color:var(--primary); font-weight:600;">"${query}"</span>`; document.getElementById('dynamic-grid').innerHTML = ''; ContentFetcher.loadMore();
+      },
+      loadMore: async () => {
+        if(isLoading) return; isLoading = true; document.getElementById('loading-spinner').style.display = 'block';
+        try { 
+          const res = await fetch(`${currentApiUrl}&page=${currentPage}`); 
+          const data = await res.json(); 
+          if (data.results) {
+            const html = data.results.filter(m => m.poster_path).map((m, i) => UI.createCardHTML(m, m.media_type || currentFallbackType, i)).join(''); 
+            document.getElementById('dynamic-grid').insertAdjacentHTML('beforeend', html); currentPage++; 
+          }
+        } catch (e) { console.error("Load more error", e); }
+        isLoading = false; document.getElementById('loading-spinner').style.display = 'none';
+      }
+    };
+    window.addEventListener('scroll', () => { 
+      const header = document.getElementById('main-header');
+      if (window.scrollY > 50) header.style.background = 'rgba(7, 11, 20, 0.95)'; else header.style.background = 'rgba(7, 11, 20, 0.75)';
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) { if (!isLoading && currentMode !== 'home') ContentFetcher.loadMore(); } 
+    });
+const UI = {
+      showToast: (msg, isError = false) => {
+        const toast = document.getElementById('custom-toast'); const msgEl = document.getElementById('toast-message'); const icon = document.getElementById('toast-icon');
+        msgEl.innerText = msg; toast.className = ''; 
+        if (isError) { toast.classList.add('error'); icon.className = 'fas fa-exclamation-triangle'; } else { toast.classList.add('success'); icon.className = 'fas fa-check-circle'; }
+        toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 4000);
+      },
+      updateHeader: () => { 
+        const badge = document.getElementById('user-badge'); 
+        if(State.userRole === "OWNER") { badge.innerHTML = '<i class="fas fa-crown"></i> OWNER'; badge.className = 'badge role-owner'; } 
+        else if(State.userRole === "MANAGER") { badge.innerHTML = '<i class="fas fa-shield-alt"></i> MANAGER'; badge.className = 'badge badge-manager'; } 
+        else { badge.innerHTML = `<i class="fas fa-gem"></i> ${State.userRole} [${State.watchedToday}/${State.userLimit}]`; badge.className = 'badge'; }
+      },
+      createCardHTML: (item, type, index = 0) => { 
+        return `<button class="movie-card" tabindex="0" style="animation-delay: ${index * 0.04}s" onclick="UI.openDetails('${item.id}', '${type}')"><img src="https://image.tmdb.org/t/p/w500${item.poster_path}" loading="lazy"><div class="card-hover-overlay"><div class="card-btn">לפרטים <i class="fas fa-arrow-left" style="font-size:12px;"></i></div></div></button>`; 
+      },
+      buildRow: (containerId, items, forceType = null) => {
+        const container = document.getElementById(containerId); 
+        if (!items || items.length === 0) { container.innerHTML = '<div style="color:rgba(255,255,255,0.2); padding: 20px; text-align:center; width:100%;">אין תוכן זמין בקטגוריה זו.</div>'; return; }
+        container.innerHTML = items.filter(m => m.poster_path).map((m, i) => UI.createCardHTML(m, forceType || m.media_type || 'movie', i)).join('');
+         
+        let isDown = false; let startX; let scrollLeft; container.addEventListener('mousedown', e => { isDown = true; container.style.cursor = 'grabbing'; startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft; }); container.addEventListener('mouseleave', () => { isDown = false; container.style.cursor = 'grab'; }); container.addEventListener('mouseup', () => { isDown = false; container.style.cursor = 'grab'; }); container.addEventListener('mousemove', e => { if(!isDown) return; e.preventDefault(); const x = e.pageX - container.offsetLeft; const walk = (x - startX) * 2.5; container.scrollLeft = scrollLeft - walk; });
+      },
+      showBlockAlert: () => { const alertBox = document.getElementById('block-alert'); alertBox.classList.add('show'); setTimeout(() => alertBox.classList.remove('show'), 4000); },
+      toggleMobileMenu: () => { document.getElementById('nav-links').classList.toggle('active'); },
+      openRequestModal: () => { document.getElementById('request-overlay').classList.add('active'); document.getElementById('request-modal').classList.add('active'); },
+      closeRequestModal: () => { document.getElementById('request-overlay').classList.remove('active'); document.getElementById('request-modal').classList.remove('active'); },
+       
+      openDetails: async (id, type) => {
+        const overlay = document.getElementById('details-overlay'); 
+        const siteContent = document.getElementById('site-content');
+        document.body.style.overflow = 'hidden'; 
+        siteContent.style.filter = 'blur(5px) brightness(0.8)'; siteContent.style.transition = 'filter 0.5s ease';
+        overlay.style.display = 'block'; 
+         
+        setTimeout(() => { overlay.classList.add('active'); }, 10);
+         
+        document.getElementById('d-title').innerText = "טוען..."; document.getElementById('d-desc').innerText = ""; document.getElementById('d-poster').src = "";
+        document.getElementById('movie-controls').style.display = 'none'; document.getElementById('tv-controls').style.display = 'none';
+        document.querySelector('.liquid-modal-bg').style.backgroundImage = 'none';
+        CurrentVid.id = id; CurrentVid.type = type;
+         
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=he-IL`); 
+          const item = await res.json();
+           
+          if(item.poster_path) {
+            document.getElementById('d-poster').src = `https://image.tmdb.org/t/p/w500${item.poster_path}`; 
+            State.currentPoster = item.poster_path;
+          } else {
+            document.getElementById('d-poster').src = 'https://via.placeholder.com/500x750/111111/FFFFFF?text=No+Poster';
+            State.currentPoster = null;
+          }
+           
+          if(item.backdrop_path) {
+            const bgElement = document.querySelector('.liquid-modal-bg');
+            bgElement.style.backgroundImage = `url(https://image.tmdb.org/t/p/original${item.backdrop_path})`;
+            bgElement.style.backgroundSize = 'cover'; bgElement.style.backgroundPosition = 'center'; bgElement.style.opacity = '0.4';
+          }
+           
+          document.getElementById('d-title').innerText = item.title || item.name; 
+          document.getElementById('d-rating').innerHTML = `<i class="fas fa-star"></i> <span>${item.vote_average ? item.vote_average.toFixed(1) : 'N/A'}</span>`; 
+          document.getElementById('d-year').innerText = (item.release_date || item.first_air_date || '----').substring(0, 4); 
+          document.getElementById('d-type').innerText = type === 'tv' ? '📺 סדרה' : '🎬 סרט'; 
+          document.getElementById('d-desc').innerText = item.overview || "אין תקציר זמין כרגע.";
+           
+          const originCountry = item.origin_country || []; currentIsIsraeli = originCountry.includes('IL') || (item.original_language === 'he');
+           
+          if (type === 'movie') { 
+            document.getElementById('movie-controls').style.display = 'block'; 
+            document.getElementById('btn-play-main').onclick = () => UI.openPlayer(id, 'movie'); 
+          } 
+          else if (type === 'tv') { 
+            currentTvId = id; document.getElementById('tv-controls').style.display = 'block'; 
+            const seasons = item.seasons ? item.seasons.filter(s => s.season_number > 0) : []; 
+            let seasonsHtml = '<div class="season-selector">'; 
+            seasons.forEach((s, idx) => { seasonsHtml += `<button tabindex="0" class="season-btn ${idx === 0 ? 'active' : ''}" onclick="UI.loadSeason(${s.season_number}, this)">עונה ${s.season_number}</button>`; }); 
+            seasonsHtml += '</div><div id="episodes-list" class="episodes-container"></div>'; 
+            document.getElementById('tv-controls').innerHTML = seasonsHtml; 
+            if(seasons.length > 0) UI.loadSeason(seasons[0].season_number, null); 
+            else document.getElementById('episodes-list').innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:20px;">אין עונות זמינות.</div>';
+          }
+        } catch(e) { document.getElementById('d-title').innerText = "שגיאה בטעינה"; console.error(e); }
+      },
+       
+      closeDetails: () => { 
+        const overlay = document.getElementById('details-overlay');
+        const siteContent = document.getElementById('site-content');
+        overlay.classList.remove('active');
+        siteContent.style.filter = 'none';
+         
+        setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }, 600); 
+      },
+       
+      loadSeason: async (seasonNum, btnElement) => {
+        if(btnElement) { document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
+        const epList = document.getElementById('episodes-list'); 
+        epList.innerHTML = '<div style="color:var(--primary); font-size: 16px; text-align:center; padding:40px; font-weight:300;"><i class="fas fa-circle-notch fa-spin"></i> מאתר פרקים...</div>';
+         
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/tv/${currentTvId}/season/${seasonNum}?api_key=${API_KEY}&language=he-IL`); 
+          const seasonData = await res.json(); let epsHtml = '';
+           
+          if (seasonData.episodes && seasonData.episodes.length > 0) {
+            seasonData.episodes.forEach(ep => { 
+              const img = ep.still_path ? `https://image.tmdb.org/t/p/w400${ep.still_path}` : 'https://via.placeholder.com/400x225/111111/0ea5e9?text=EpicStream'; 
+              epsHtml += `<button class="ep-card" tabindex="0" onclick="UI.openPlayer('${currentTvId}', 'tv', ${seasonNum}, ${ep.episode_number})" style="width:100%; text-align:right; border:none;">                   <div class="ep-img-wrapper"><img src="${img}" loading="lazy"><div class="ep-play-overlay"><div class="ep-play-btn"><i class="fas fa-play"></i></div></div></div>                   <div class="ep-card-info">                     <div class="ep-num">פרק ${ep.episode_number}</div>                     <div class="ep-name">${ep.name || 'פרק ' + ep.episode_number}</div>                     <div class="ep-overview">${ep.overview || 'אין תקציר לפרק זה.'}</div>                   </div>                 </button>`; 
+            });
+            epList.innerHTML = epsHtml; 
+          } else { epList.innerHTML = '<div style="color:rgba(255,255,255,0.3); text-align:center; padding:20px;">אין פרקים זמינים בעונה זו.</div>'; }
+        } catch(e) { epList.innerHTML = '<div style="color:#ff3333; text-align:center; padding:20px; font-weight:300;">שגיאה בטעינת הפרקים. נסה שוב מאוחר יותר.</div>'; console.error(e); }
+      },
+       
+      openPlayer: (id, type, sNum = null, eNum = null) => {
+        if(currentIsIsraeli) { UI.showBlockAlert(); return; }
+        if (State.userRole !== "OWNER" && State.userRole !== "MANAGER") { 
+          if (State.watchedToday >= State.userLimit) { UI.showToast("⛔ הגעת למגבלת הצפיות היומית.", true); return; }
+          State.watchedToday++; localStorage.setItem('watched_count', State.watchedToday); UI.updateHeader(); 
+        }
+         
+        UI.closeDetails(); document.getElementById('player-wrapper').style.display = 'block'; document.body.style.overflow = 'hidden';
+        let url = `https://vidsrc.me/embed/movie?tmdb=${id}`; 
+        if(type === 'tv' && sNum && eNum) { url = `https://vidsrc.me/embed/tv?tmdb=${id}&season=${sNum}&episode=${eNum}`; }
+        document.getElementById('video-frame').src = url;
+        ContinueWatchSys.save(id, type, State.currentPoster);
+      },
+       
+      closePlayer: () => { 
+        document.getElementById('player-wrapper').style.display = 'none'; 
+        document.getElementById('video-frame').src = ''; 
+        document.body.style.overflow = 'auto'; 
+        setTimeout(() => { ContentFetcher.loadContinueWatching(); }, 1000);
+      }
+    };
+let searchTimeout; 
+    document.getElementById('search-inp').addEventListener('input', (e) => { 
+      clearTimeout(searchTimeout); 
+      const q = e.target.value.trim();
+      if(q) {
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); 
+        searchTimeout = setTimeout(() => { ContentFetcher.search(q); }, 600); 
+      } else {
+        if (currentMode === 'search') Router.navigate('home', document.querySelector('.nav-links a:first-child'));
+      }
+    });
+     
+    SystemAuth.init();
+  </script>
+
+</body>
+</html>
